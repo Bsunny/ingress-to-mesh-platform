@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: skate-alerts-info-cron
+  namespace: {{ include "skate.namespace" . }}
+  labels:
+    app: skate-alerts-info-cron
+spec:
+  schedule: "*/2 * * * *"
+  concurrencyPolicy: Replace
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: skate-alerts-info-cron
+            image: {{ include "skate-alerts.cron-image" . }}
+            args:
+            - /bin/sh
+            - -ec
+            - curl -X POST "http://skate-alerts-service.{{ .Values.deployment.namespace }}.svc.cluster.local/get-info"
+          restartPolicy: OnFailure
+          {{- with .Values.deployment.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}

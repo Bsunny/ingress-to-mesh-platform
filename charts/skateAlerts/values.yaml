@@ -1,0 +1,41 @@
+#### Skate Alerts Application specific values
+
+
+deployment:
+  name: skate-alerts
+  namespace: monitoring
+  labels: {}
+  annotations: {}
+  image:  # Docker Image URL for Skate Alerts (required)
+  cronImage: # Docker Cron Image URL for Skate Alerts (required)
+  busyboxImage: # Docker Busybox Image URL for Skate Alerts (required)
+  replicas: 1
+  containerPort: 5000 # Defaults to 5000
+  securityContext: {}
+  podSecurityContext: {}
+  nodeSelector: {}
+  imagePullSecrets: 
+  - name: regcred
+  env:
+    PORT: # SSD Default Port for Skate Alerts, defaults to "3000"
+    DB_HOST: # Database Host for Skate Alerts, Required!
+    DB_PORT: # Database Port for Skate Alerts, Required!
+    DB_NAME: # Database Name for Skate Alerts, Required!
+    DB_PASSWORD: # Base64 encoded string of DB Password, Required!
+    DB_SCHEMA: # Database Schema for Skate Alerts, Required!
+    DB_USER_NAME: # Database Username for Skate Alerts, Required!
+    PGSSLMODE: # Database PGSSL Mode for Skate, defaults to "no-verify"
+    CLUSTER_NAME: # Cluster Name, Required!, defaults to "skate-runtime-cluster"
+    CRYPTO_KEY: # Crypto Key for encryption, has default value.
+    SKATE_FRONT_END:  # Skate front end URL
+    SKATE_SIGNOZ_CHANNEL_BASIC_AUTH_USERNAME: #For validating signoz webhook callback
+    SKATE_SIGNOZ_CHANNEL_BASIC_AUTH_PASSWORD: #For validating signoz webhook callback
+
+  resources: 
+    limits:
+      cpu: 
+      memory: 
+    requests:
+      cpu: 
+      memory: 
+

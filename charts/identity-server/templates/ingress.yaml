@@ -1,0 +1,48 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+{{ $ingressClass := .Values.ingress.ingressClassName | default .Values.ingress.ingressClass | default "nginx" }}
+metadata:  
+  name: {{ .Values.deployment.name }}-ingress
+  namespace: {{ .Values.deployment.namespace }}
+  annotations:
+  {{- if .Values.ingress.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
+  {{- end }}
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '9090'
+    prometheus.io/path: "/metrics"
+  {{- if eq $ingressClass "kong" }}
+    {{- if .Values.istio.enabled }}
+    konghq.com/plugins: {{ .Values.deployment.name }}-mtls
+    {{- end }}
+    konghq.com/strip-path: "false"
+    konghq.com/preserve-host: "true"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+  {{- else }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+    nginx.ingress.kubernetes.io/auth-tls-secret: {{ printf "%s/%s" .Values.deployment.namespace .Values.ingress.secretName }}
+  {{- end }}
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ $ingressClass }}
+  tls:
+  - secretName: {{ .Values.ingress.secretName }}
+    hosts:
+      - {{ .Values.ingress.ingressHost }}
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Values.service.name }}
+            port:
+              number: {{ .Values.service.httpsPort }}
+    host: {{ .Values.ingress.ingressHost }}

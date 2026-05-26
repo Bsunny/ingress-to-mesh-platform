@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "skate-alerts-api-check"
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: skate-wait-for-ready
+      image: {{ include "skate-alerts.busybox-image" . }}
+      command: ['sleep']
+      args: 
+        - '15'
+    - name: skate-alerts-api-test
+      image: {{ include "skate-alerts.busybox-image" . }}
+      command: ['wget']
+      args: 
+        - '--spider'
+        - '--timeout=5'
+        - "http://skate-alerts-service.{{ .Values.deployment.namespace }}.svc.cluster.local:3000/get-info"
+  restartPolicy: Never
+  {{- with .Values.deployment.imagePullSecrets }}
+  imagePullSecrets:
+  {{ toYaml . }}
+  {{- end }}

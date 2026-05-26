@@ -1,0 +1,90 @@
+# Default values for identity-server.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+externalSecrets:
+  enabled: false
+
+istio:
+  enabled: false
+  mtls:
+    mode: PERMISSIVE
+
+deployment:
+  name: identity-server
+  namespace: identity-server
+  labels: {}
+  annotations: {}
+  image: # Docker Image URL of Identity Server
+  dockerHost: # Docker Host
+  dockerUsername: # Base64 encoded value for docker username, has defaults
+  dockerPassword: # Base64 encoded value for docker password, has defaults
+  imagePullPolicy: Always
+  imagePullSecrets:
+  - name: regcred
+  replicas: 1
+  containerPort: 3005
+  securityContext: {}
+  podSecurityContext: {}
+  env:
+    PORT: # Default Port for Identity Server Service, defaults to "3005"
+    ISSUER: # IDS Domain with protocol, eg: https://www.example.com
+    IDS_HOST: # IDS Domain without protocol, eg: www.example.com
+    BUILD_SERVER_LOGGER: # Logging level, eg: silly. Defaults to "silly"
+    ALLOWED_ORIGINS: # Origins URL, defaults to "http://localhost:9000 http://localhost:4200"
+    SAME_SITE: # Same site settings, defaults to "lax"
+    NODE_ENV: # Node Environment type, defaults to "production"
+    IDS_DB_TYPE: # DB Type, defaults to "sql"
+    IDS_PROTOCAL: # Protocol to be used, defaults to "http"
+    DB_TYPE: # DB Engine running, defaults to "postgres"
+    DB_HOST: # Database Host for Identity Server, defaults to "console-monitoring-postgresql.monitoring.svc.cluster.local"
+    DB_PORT: # Database Port for Identity Server, defaults to 5432
+    DB_NAME: # Database Name for Identity Server, defaults to "identity_server"
+    DB_PASSWORD: # Base64 encoded string of DB Password, has defaults 
+    SCHEMA: # Database Schema for Identity Server, defaults to "identity_server_schema"
+    DB_USERNAME: # Database Username for Identity Server, defaults to "identity_server_admin"
+    SSL: # SSL Mode for IDS, "true" for SSL, "" (blank) for NO-SSL, defaults to ""
+    PGSSLMODE: # PGSSL Mode for postgres, defaults to "disable"
+    FREE_TRIAL_CLIENT_ID: # Your Free Trial Client ID
+    GOOGLE_APPLICATION_CREDENTIALS: ./.gcpCreds.json
+    IDS_PBKDF2_ITERATIONS: "2500000"
+    SITE_KEY: # ReCaptcha Site Key
+    CAPTCHA_SCORE_TOLERANCE: # ReCaptcha Score Tolerance
+    ID_TOKEN_ENC_SALT: # Encryption Salt
+    ID_TOKEN_ENC_PASSPHRASE: # Encryption Passphrase
+
+
+  resources:
+    limits:
+      cpu: 400m
+      memory: 256Mi
+    requests:
+      cpu: 200m
+      memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 
+
+service:
+  name: identity-server-service
+  type: ClusterIP
+  labels: {}
+  annotations: {}
+  httpPort: 80
+  httpTargetPort: 3005
+  httpsPort: 443
+  httpsTargetPort: 3005
+
+ingress:
+  enabled: true
+  ingressClass: nginx
+  ingressHost:
+  ingressPath: /(.*)
+  secretName: ids-tls
+  secretKey:
+  secretCertificate:
+  clusterIs

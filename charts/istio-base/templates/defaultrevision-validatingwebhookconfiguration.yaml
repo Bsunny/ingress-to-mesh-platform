@@ -1,0 +1,50 @@
+{{- if or (eq .Values.global.resourceScope "all") (eq .Values.global.resourceScope "cluster") }}
+{{- if not (eq .Values.defaultRevision "") }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: istiod-default-validator
+  labels:
+    app: istiod
+    release: {{ .Release.Name }}
+    istio: istiod
+    istio.io/rev: {{ .Values.defaultRevision | quote }}
+    app.kubernetes.io/name: "istiod"
+    {{- include "istio.labels" . | nindent 4 }}
+webhooks:
+  - name: validation.istio.io
+    clientConfig:
+      {{- if .Values.base.validationURL }}
+      url: {{ .Values.base.validationURL }}
+      {{- else }}
+      service:
+        {{- if (eq .Values.defaultRevision "default") }}
+        name: istiod
+        {{- else }}
+        name: istiod-{{ .Values.defaultRevision }}
+        {{- end }}
+        namespace: {{ .Values.global.istioNamespace }}
+        path: "/validate"
+      {{- end }}
+      {{- if .Values.base.validationCABundle }}
+      caBundle: "{{ .Values.base.validationCABundle }}"
+      {{- end }}
+    rules:
+      - operations:
+          - CREATE
+          - UPDATE
+        apiGroups:
+          - security.istio.io
+          - networking.istio.io
+          - telemetry.istio.io
+          - extensions.istio.io
+        apiVersions:
+          - "*"
+        resources:
+          - "*"
+
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions: ["v1"]
+{{- end }}
+{{- end }}

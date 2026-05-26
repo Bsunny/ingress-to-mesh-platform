@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "skate-license-agent.configmap" . }}
+  namespace: {{ include "skate-license-agent.namespace" . }}
+data:
+  ## Common Environment Variables for skate application
+  #  Database Details for Skate Application
+  PORT: {{ quote (include "skate-license-agent.port" .) }}
+  BASE_PATH: {{ quote (include "skate-license-agent.base-path" .) }}
+  IDS_ISSUER_URL: {{ include "skate-license-agent.ids-issuer-url" . }}
+  LICENSE_SERVER_URL: {{ include "skate-license-agent.license-server-url" . }}
+  ORGANIZATION_ID: {{ include "skate-license-agent.organization-id" . }}
+  LICENSE_AGENT_UI_BASE_URL: {{ include "skate-license-agent.license-agent-ui-base-url" . }}
+  CLUSTER_NAME: {{ quote (include "skate-license-agent.cluster-name" .) }}
+  ENVIRONMENT_NAME: {{ quote (include "skate-license-agent.environment-name" .) }}
+  BUFFER_TIME: {{ quote (include "skate-license-agent.buffer-time" .) }}
+  MAIL_HOST: {{ quote (include "skate-license-agent.mail-host" .) }}
+  MAIL_PORT: {{ quote (include "skate-license-agent.mail-port" .) }}
+  MAIL_USER: {{ quote (include "skate-license-agent.mail-user" .) }}
+  MAIL_FROM: {{ quote (include "skate-license-agent.mail-from" .) }}
+  MAIL_TO: {{ quote (include "skate-license-agent.mail-to" .) }}
+  PRODUCTION: {{ quote (include "skate-license-agent.production" .) }}
+  LICENSE_AGENT_URL: {{ quote (include "skate-license-agent.license-agent-url" .) }}
+  CONSOLE_RUNTIME: {{ quote (include "skate-license-agent.console-runtime" .) }}
+  REQUEST_TIMEOUT: {{ quote (include "skate-license-agent.request-timeout" .) }}
+  UI_API_CTX_PATH: {{ quote (include "skate-license-agent.ui-api-ctx-path" .) }}
+  SKIP_AUTH: {{ quote (include "skate-license-agent.skip-auth" .) }}
+
+

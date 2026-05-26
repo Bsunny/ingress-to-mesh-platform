@@ -1,0 +1,9 @@
+dependencies:
+- name: kong
+  repository: file://./charts/kong
+  version: 3.0.2
+- name: kong
+  repository: file://./charts/kong
+  version: 3.0.2
+digest: sha256:5346e2825504831fc75c8a37a70d8cc1cac0e9784edea55911654af45b9311bc
+generated: "2026-02-25T18:24:56.295859478+05:30"

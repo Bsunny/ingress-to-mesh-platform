@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "skate.name" . }}
+  namespace: {{ include "skate.namespace" . }}
+  labels:
+    app: {{ include "skate.name" . }}
+  annotations:
+    {{ include "skate.annotations" . }}
+spec:
+  replicas: {{ include "skate-alerts.replicas" . }}
+  strategy:
+    {{ include "skate.strategy" . }}
+  selector:
+    matchLabels:
+      app: {{ include "skate.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "skate.name" . }}
+    spec:
+      containers:
+      - name: {{ include "skate.name" . }}
+        image: {{ include "skate-alerts.image" . }}
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: {{ include "skate-alerts.port" . }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: {{ include "skate-alerts.port" . }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 5
+        imagePullPolicy: Always
+        resources:
+          {{ include "skate-alerts.resources" . }}
+        env:
+          {{ include "skate.alerts-env" . }}
+        ports:
+          - containerPort: {{ include "skate.service-target-port" . }}
+            protocol: TCP
+      {{- with .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---

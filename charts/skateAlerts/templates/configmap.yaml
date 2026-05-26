@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skate-configmap
+  namespace: {{ include "skate.namespace" . }}
+data:
+  ## Common Environment Variables for skate application
+  #  Database Details for Skate Application
+  DB_HOST: {{ include "skate-alerts.db-host" . }}
+  DB_PORT: {{ quote (include "skate-alerts.db-port" .) }}
+  DB_NAME: {{ include "skate-alerts.db-name" . }}
+  DB_SCHEMA: {{ include "skate-alerts.db-schema" . }}
+  DB_USER_NAME: {{ include "skate-alerts.db-username" . }}
+  PGSSLMODE: {{ include "skate-alerts.db-pg-ssl-mode" . }}
+  PORT: {{ quote (include "skate-alerts.port" .) }}
+  CLUSTER_NAME: {{ quote (include "skate-alerts.cluster-name" .) }}
+  SKATE_FRONT_END: {{ quote (include "skate-alerts.skate-front-end" .) }}
+
+---
+apiVersion: v1
+data:
+  clustername: "{{ .Values.deployment.env.CLUSTER_NAME }}"
+kind: ConfigMap
+metadata:
+  name: cluster-info
+  namespace: {{ include "skate.namespace" . }}

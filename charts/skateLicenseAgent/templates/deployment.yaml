@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "skate-license-agent-backend.name" . }}
+  namespace: {{ include "skate-license-agent.namespace" . }}
+  labels:
+    app: {{ include "skate-license-agent-backend.name" . }}
+  annotations:
+    {{ include "skate-license-agent.annotations" . }}
+spec:
+  replicas: {{ include "skate-license-agent.replicas" . }}
+  strategy:
+    {{ include "skate-license-agent.strategy" . }}
+  selector:
+    matchLabels:
+      app: {{ include "skate-license-agent-backend.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "skate-license-agent-backend.name" . }}
+    spec:
+      containers:
+      - name: {{ include "skate-license-agent-backend.name" . }}
+        image: {{ include "skate-license-agent.image" . }}
+        # livenessProbe:
+        #   httpGet:
+        #     path: /ping
+        #     port: {{ include "skate-license-agent.port" . }}
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 10
+        #   timeoutSeconds: 10
+        #   failureThreshold: 5
+        # readinessProbe:
+        #   httpGet:
+        #     path: /ping
+        #     port: {{ include "skate-license-agent.port" . }}
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 10
+        #   timeoutSeconds: 10
+        #   failureThreshold: 5
+        imagePullPolicy: Always
+        resources:
+          {{- toYaml .Values.skateLicenseAgentBackend.deployment.resources | nindent 10 }}
+        env:
+          {{ include "skate-license-agent.backend-env" . }}
+        ports:
+          - containerPort: {{ include "skate-license-agent.service-target-port" . }}
+            protocol: TCP
+        volumeMounts:
+        {{- toYaml .Values.skateLicenseAgentBackend.deployment.volumeMounts | nindent 8 }}
+      volumes:
+      {{- toYaml .Values.skateLicenseAgentBackend.deployment.volumes | nindent 6 }}
+      {{- with .Values.skateLicenseAgentBackend.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.skateLicenseAgentBackend.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "skate-license-agent-frontend.name" . }}
+  namespace: {{ include "skate-license-agent.namespace" . }}
+  labels:
+    app: {{ include "skate-license-agent-frontend.name" . }}
+  annotations:
+    {{ include "skate-license-agent.annotations" . }}
+spec:
+  replicas: {{ include "skate-license-agent.replicas" . }}
+  strategy:
+    {{ include "skate-license-agent.strategy" . }}
+  selector:
+    matchLabels:
+      app: {{ include "skate-license-agent-frontend.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "skate-license-agent-frontend.name" . }}
+    spec:
+      containers:
+      - name: {{ include "skate-license-agent-frontend.name" . }}-ui
+        image: {{ include "skate-license-agent.imageUI" . }}
+        imagePullPolicy: Always
+        resources:
+          {{- toYaml .Values.skateLicenseAgentFrontend.deployment.resources | nindent 10 }}
+        env:
+          {{ include "skate-license-agent.frontend-ui-env" . }}
+        ports:
+          - containerPort: 80
+            protocol: TCP
+      - name: {{ include "skate-license-agent-frontend.name" . }}-api
+        image: {{ include "skate-license-agent.imageAPI" . }}
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "200m"
+            memory: "200M"
+          requests:
+            cpu: "100m"
+            memory: "100M"
+        env:
+          {{ include "skate-license-agent.frontend-api-env" . }}
+        ports:
+          - containerPort: {{ include "skate-license-agent.service-target-port" . }}
+            protocol: TCP
+      {{- with .Values.skateLicenseAgentFrontend.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.skateLicenseAgentFrontend.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---

@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+  namespace: {{ .Values.deployment.namespace }}
+  labels:
+    app: {{ .Values.deployment.name }}
+  annotations:
+    {{ include "identity-server.annotations" . }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  strategy:
+    {{ include "identity-server.strategy" . }}
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.name }}
+    spec:
+      containers:
+      - name: {{ .Values.deployment.name }}
+        image: {{ include "identity-server.image" . }}
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: {{ .Values.deployment.containerPort }}
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 10
+        #   timeoutSeconds: 10
+        #   failureThreshold: 5
+        # readinessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: {{ .Values.deployment.containerPort }}
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 10
+        #   timeoutSeconds: 10
+        #   failureThreshold: 5
+        imagePullPolicy: Always
+        resources:
+          {{- toYaml .Values.deployment.resources | nindent 10 }}
+        env:
+          {{ include "identity-server-env" . }}
+        ports:
+          - containerPort: {{ .Values.deployment.containerPort }}
+            protocol: TCP
+      {{- with .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

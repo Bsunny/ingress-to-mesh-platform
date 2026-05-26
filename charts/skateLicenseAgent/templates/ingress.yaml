@@ -1,0 +1,243 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:  
+  name: {{ include "skate-license-agent-frontend.name" . }}-web-ingress
+  namespace: {{ include "skate-license-agent.namespace" . }}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '80'
+    prometheus.io/path: "/swagger-stats/metrics"
+  {{- if eq .Values.skateLicenseAgentFrontend.ingress.ingressClassName "kong" }}
+    {{- if .Values.istio.enabled }}
+    konghq.com/plugins: skate-license-agent-frontend-mtls
+    {{- end }}
+    konghq.com/strip-path: "false"
+    konghq.com/preserve-host: "true"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+  {{- else }}
+    nginx.ingress.kubernetes.io/rewrite-target: /web/$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      if ($request_method ~* "(TRACE|OPTIONS)") {
+        return 405;
+      }
+  {{- end }}
+  {{- with .Values.skateLicenseAgentFrontend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.skateLicenseAgentFrontend.ingress.ingressClassName }}
+  tls:
+  - secretName: {{ .Values.skateLicenseAgentFrontend.ingress.ingressSecretName }}
+    hosts:
+      - {{ .Values.skateLicenseAgentFrontend.ingress.ingressHostName }}
+  rules:
+  - http:
+      paths:
+      {{- if eq .Values.skateLicenseAgentFrontend.ingress.ingressClassName "kong" }}
+      - path: /web
+        pathType: Prefix
+      {{- else }}
+      - path: /web/(/|$)(.*)
+        pathType: ImplementationSpecific
+      {{- end }}
+        backend:
+          service:
+            name: {{ .Values.skateLicenseAgentFrontend.service.name }}
+            port:
+              number: {{ .Values.skateLicenseAgentFrontend.service.httpTargetPort }}
+    host: {{ .Values.skateLicenseAgentFrontend.ingress.ingressHostName }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "skate-license-agent-frontend.name" . }}-api-ingress
+  namespace: {{ include "skate-license-agent.namespace" . }}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '80'
+    prometheus.io/path: "/swagger-stats/metrics"
+  {{- if eq .Values.skateLicenseAgentFrontend.ingress.ingressClassName "kong" }}
+    {{- if .Values.istio.enabled }}
+    konghq.com/plugins: skate-license-agent-api-mtls
+    {{- end }}
+    konghq.com/strip-path: "false"
+    konghq.com/preserve-host: "true"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+  {{- else }}
+    nginx.ingress.kubernetes.io/rewrite-target: /license/api/$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      if ($request_method ~* "(TRACE|OPTIONS)") {
+        return 405;
+      }
+  {{- end }}
+  {{- with .Values.skateLicenseAgentFrontend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.skateLicenseAgentFrontend.ingress.ingressClassName }}
+  tls:
+  - secretName: {{ .Values.skateLicenseAgentFrontend.ingress.ingressSecretName }}
+    hosts:
+      - {{ .Values.skateLicenseAgentFrontend.ingress.ingressHostName }}
+  rules:
+  - http:
+      paths:
+      {{- if eq .Values.skateLicenseAgentFrontend.ingress.ingressClassName "kong" }}
+      - path: /license/api
+        pathType: Prefix
+      {{- else }}
+      - path: /license/api(/|$)(.*)
+        pathType: ImplementationSpecific
+      {{- end }}
+        backend:
+          service:
+            name: {{ .Values.skateLicenseAgentFrontend.service.name }}
+            port:
+              number: {{ .Values.skateLicenseAgentFrontend.service.httpTargetPort }}
+    host: {{ .Values.skateLicenseAgentFrontend.ingress.ingressHostName }}
+            
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "skate-license-agent-frontend.name" . }}-refresh-ingress
+  namespace: {{ include "skate-license-agent.namespace" . }}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '80'
+    prometheus.io/path: "/swagger-stats/metrics"
+  {{- if eq .Values.skateLicenseAgentFrontend.ingress.ingressClassName "kong" }}
+    konghq.com/strip-path: "false"
+    konghq.com/preserve-host: "true"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+  {{- else }}
+    nginx.ingress.kubernetes.io/rewrite-target: /web/$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      if ($request_method ~* "(TRACE|OPTIONS)") {
+        return 405;
+      }
+  {{- end }}
+  {{- with .Values.skateLicenseAgentFrontend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.skateLicenseAgentFrontend.ingress.ingressClassName }}
+  tls:
+  - secretName: {{ .Values.skateLicenseAgentFrontend.ingress.ingressSecretName }}
+    hosts:
+      - {{ .Values.skateLicenseAgentFrontend.ingress.ingressHostName }}
+  rules:
+  - http:
+      paths:
+      {{- if eq .Values.skateLicenseAgentFrontend.ingress.ingressClassName "kong" }}
+      - path: /web
+        pathType: Prefix
+      {{- else }}
+      - path: /web(/|$)(.*)
+        pathType: ImplementationSpecific
+      {{- end }}
+        backend:
+          service:
+            name: {{ .Values.skateLicenseAgentFrontend.service.name }}
+            port:
+              number: {{ .Values.skateLicenseAgentFrontend.service.httpTargetPort }}
+    host: {{ .Values.skateLicenseAgentFrontend.ingress.ingressHostName }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:  
+  name: {{ include "skate-license-agent-frontend.name" . }}-base-ingress
+  namespace: {{ include "skate-license-agent.namespace" . }}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '80'
+    prometheus.io/path: "/swagger-stats/metrics"
+  {{- if eq .Values.skateLicenseAgentFrontend.ingress.ingressClassName "kong" }}
+    konghq.com/strip-path: "true"
+    konghq.com/preserve-host: "true"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+    konghq.com/plugins: "license-agent-security-headers"
+  {{- else }}
+    nginx.ingress.kubernetes.io/rewrite-target: /web
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      if ($request_method ~* "(TRACE|OPTIONS)") {
+        return 405;
+      }
+  {{- end }}
+  {{- with .Values.skateLicenseAgentFrontend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.skateLicenseAgentFrontend.ingress.ingressClassName }}
+  tls:
+  - secretName: {{ .Values.skateLicenseAgentFrontend.ingress.ingressSecretName }}
+    hosts:
+      - {{ .Values.skateLicenseAgentFrontend.ingress.ingressHostName }}
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Values.skateLicenseAgentFrontend.service.name }}
+            port:
+              number: {{ .Values.skateLicenseAgentFrontend.service.httpTargetPort }}
+    host: {{ .Values.skateLicenseAgentFrontend.ingress.ingressHostName }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "skate-license-agent-backend.name" . }}-ingress
+  namespace: {{ include "skate-license-agent.namespace" . }}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port:   '8095'
+    prometheus.io/path: "/swagger-stats/metrics"
+  {{- if eq .Values.skateLicenseAgentBackend.ingress.ingressClassName "kong" }}
+    konghq.com/strip-path: "false"
+    konghq.com/preserve-host: "true"
+    konghq.com/protocols: "https"
+    konghq.com/https-redirect-status-code: "301"
+  {{- else }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      if ($request_method ~* "(TRACE|OPTIONS)") {
+        return 405;
+      }
+  {{- end }}
+  {{- with .Values.skateLicenseAgentBackend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.skateLicenseAgentBackend.ingress.ingressClassName }}
+  tls:
+  - secretName: {{ .Values.skateLicenseAgentBackend.ingress.ingressSecretName }}
+    hosts:
+      - {{ .Values.skateLicenseAgentBackend.ingress.ingressHostName }}
+  rules:
+  - http:
+      paths:
+      - path: /api
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Values.skateLicenseAgentBackend.service.name }}
+            port:
+              number: {{ .Values.skateLicenseAgentBackend.service.httpTargetPort }}
+    host: {{ .Values.skateLicenseAgentBackend.ingress.ingressHostName }}

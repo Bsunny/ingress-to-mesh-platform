@@ -1,0 +1,10 @@
+{{- if and .Values.istio.enabled (.Capabilities.APIVersions.Has "security.istio.io/v1beta1") }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: license-agent-mtls
+  namespace: {{ include "skate-license-agent.namespace" . }}
+spec:
+  mtls:
+    mode: {{ .Values.istio.mtls.mode | default "PERMISSIVE" }}
+{{- end }}

@@ -1,0 +1,50 @@
+apiVersion: v2
+name: console-runtime-init
+description: A Helm chart to setup Console Runtime Components.
+
+type: application
+
+version: 4.8.0
+
+appVersion: "4.8.0"
+
+dependencies:
+- condition: kubeStateMetrics.enabled
+  name: kube-state-metrics
+  version: 5.25.1
+- condition: ingress-nginx.enabled
+  name: ingress-nginx
+  repository: https://github.com/kubernetes/ingress-nginx
+  version: 4.8.2
+- condition: kong-ingress.enabled
+  name: ingress
+  alias: kong-ingress
+  repository: "file://./charts/kong-ingress"
+  version: 0.22.0
+- condition: external-secrets.enabled
+  name: external-secrets
+  repository: https://github.com/external-secrets/external-secrets
+  version: 0.16.2
+- condition: skateAlerts.enabled
+  name: skateAlerts
+  repository: "" # Provide your Helm chart repository URL for skateAlerts
+  version: 1.0.0
+- condition: skateLicenseAgent.enabled
+  name: skateLicenseAgent
+  repository: "" # Provide your Helm chart repository URL for skateLicenseAgent
+  version: 1.0.0
+- condition: certManager.enabled
+  name: cert-manager
+  repository: https://github.com/cert-manager/cert-manager
+  version: 1.13.1
+- condition: identity-server.enabled
+  name: identity-server
+  repository: "" # Provide your Helm chart repository URL for identity-server
+  version: 1.0.0
+- condition: istio.enabled
+  name: base
+  alias: istio-base
+  version: 1.29.0
+- condition: istio.enabled
+  name: istiod
+  version: 1

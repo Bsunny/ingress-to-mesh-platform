@@ -1,0 +1,377 @@
+#### Configuration Values for Skate Runtime Init Chart
+
+istio:
+  enabled: true
+  mtls:
+    mode: STRICT
+
+global:
+  istioNamespace: monitoring
+  createRegistrySecret: true
+
+### Docker registry details for creating docker-registry secret
+  dockerRegistry:
+  ## Docker Secret Name should match all occurances of imagePullSecrets (name)
+    dockerSecretName: "regcred"
+    dockerHost: "" # Docker registry URL, e.g. "myregistry.azurecr.io"
+    dockerUsername: "" # Base64 encoded value of Docker Username
+    dockerPassword: "" # Base64 encoded value of Docker Password
+
+skate-storage:
+  enabled: false
+  ### Accepted values are "AKS" or "GKE" or "OKE" or "EKS"
+  cloudStorageProvider:
+  prometheusVolumeSize:
+  prometheusVolumeHandle:
+
+#### Skate Alerts Application specific values
+
+skateAlerts:
+  enabled: false  
+  deployment:
+    name: skate-alerts
+    namespace: monitoring
+    image: # Docker Image URL for Skate Alerts
+    #Docker Image URL for Skate Alerts
+    cronImage: # Docker Cron Image URL for Skate Alerts
+    replicas: 1
+    containerPort: 5000 # Defaults to 5000
+    securityContext: {}
+    podSecurityContext: {}
+    nodeSelector: {}
+    imagePullSecrets:
+      - name: regcred
+    env:
+      PORT: 5000 # SSD Default Port for Skate Alerts, defaults to "5000"
+      DB_HOST: # Database Host for Skate Alerts, Required!
+      DB_PORT: 5432 # Database Port for Skate Alerts, Required!
+      DB_NAME: # Database Name for Skate Alerts, Required!
+      DB_PASSWORD:  # Base64 encoded string of DB Password, Required!
+      DB_SCHEMA:  # Database Schema for Skate Alerts, Required!
+      DB_USER_NAME:  # Database Username for Skate Alerts, Required!
+      PGSSLMODE: # Database PGSSL Mode for Skate, defaults to "no-verify"
+      CRYPTO_KEY:  # Crypto Key for encryption
+      CLUSTER_NAME:  # Cluster Name for Skate Alerts
+      SKATE_FRONT_END:  # Skate front end URL
+      SKATE_SIGNOZ_CHANNEL_BASIC_AUTH_USERNAME: abc # For validating signoz webhook callback
+      SKATE_SIGNOZ_CHANNEL_BASIC_AUTH_PASSWORD: xyz # For validating signoz webhook callback
+    resources:
+      limits:
+        cpu: 500m
+        memory: 500M
+      requests:
+        cpu: 250m
+        memory: 300M
+
+skateLicenseAgent:
+  enabled: false
+  skateLicenseAgentFrontend:
+    deployment:
+      name: skate-license-agent-frontend
+      namespace: skate-lic
+      labels: {}
+      annotations: {}
+      imageUI: # Docker UI Image URL for Skate License Agent Frontend
+      imageAPI: # Docker API Image URL for Skate License Agent Frontend
+      replicas: 1
+      containerPort: 5000 # Defaults to 5000
+      securityContext: {}
+      podSecurityContext: {}
+      nodeSelector: {}
+      imagePullSecrets:
+        - name: regcred
+      env:
+        PRODUCTION: "true" ## Set to true if you are using the production environment
+        LICENSE_AGENT_URL: # Skate License Agent Backend URL
+        CONSOLE_RUNTIME: "true" # Set to true if you are using this as a console runtime environment
+        REQUEST_TIMEOUT: "30000" # Request timeout in milliseconds
+        UI_API_CTX_PATH: "skate" # UI API context path
+        SKIP_AUTH: "true" # Set to true if you want to skip auth
+      resources:
+        limits:
+          cpu: 500m
+          memory: 500M
+        requests:
+          cpu: 250m
+          memory: 300M
+
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 100
+      targetCPUUtilizationPercentage: 80
+      # targetMemoryUtilizationPercentage: 
+
+    service:
+      name: skate-license-agent-frontend-service
+      type: ClusterIP
+      labels: {}
+      annotations: {}
+      httpPort: 80
+      httpTargetPort: 80
+      httpsPort: 443
+      httpsTargetPort: 80
+    ingress:
+      ingressClassName: kong # Skate License Agent Ingress Name
+      annotations: {}
+      ingressHostName:  # Skate License Agent Host Name, this is different to the runtime cluster hostname
+      ingressSecretName: skate-dev-tls # Skate License Agent Secret Name
+
+  skateLicenseAgentBackend:
+    deployment:
+      name: skate-license-agent-backend
+      namespace: skate-lic
+      labels: {}
+      annotations: {}
+      image: # Docker Image URL for Skate License Agent Backend
+      replicas: 1
+      containerPort: 8095
+      securityContext: {}
+      podSecurityContext: {}
+      nodeSelector: {}
+      imagePullSecrets:
+        - name: regcred
+      env:
+        PORT: 8095
+        BASE_PATH: # SSD Default Base Path for Skate License Agent Frontend, defaults to "api"
+        IDS_ISSUER_URL:  # IDS Issuer URL for Skate License Agent Frontend
+        IDS_CLIENT_ID:  #  Base64 encoded string of IDS Client ID
+        IDS_CLIENT_SECRET:  #  Base64 encoded string of IDS Client Secret
+        LICENSE_SERVER_URL:  #  Skate License Server URL
+        ORGANIZATION_ID:  # Skate License Agent Organization ID
+        LICENSE_AGENT_UI_BASE_URL:  # Skate License Agent UI Base URL
+        ENCRYPTION_KEY:  # Base64 encoded string of Encryption Key
+        CLUSTER_NAME:  # Skate License Agent Cluster Name
+        ENVIRONMENT_NAME:  # Skate License Agent Environment Name
+        BUFFER_TIME:  # Buffer Time
+        MAIL_HOST:  # SMTP Host
+        MAIL_PORT:  # SMTP Port
+        MAIL_USER:  # SMTP User
+        MAIL_PASS:  # Base64 encoded string of SMTP Password
+        MAIL_FROM:  # SMTP From
+        MAIL_TO:  # SMTP To
+      resources:
+        limits:
+          cpu: 500m
+          memory: 500M
+        requests:
+          cpu: 250m
+          memory: 300M
+
+      ## Volume and Volume Mounts for Skate License Agent Application
+      volumes:
+        - name: skate-storage
+          persistentVolumeClaim:
+            claimName: skate-pvc
+            readOnly: false
+
+      volumeMounts:
+        - mountPath: "/environments/configs"
+          name: skate-storage
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 100
+      targetCPUUtilizationPercentage: 80
+      # targetMemoryUtilizationPercentage: 
+
+    service:
+      name: skate-license-agent-backend-service
+      type: ClusterIP
+      labels: {}
+      annotations: {}
+      httpPort: 80
+      httpTargetPort: 8095
+      httpsPort: 443
+      httpsTargetPort: 8095
+
+    ingress:
+      ingressClassName: kong # Skate License Agent Ingress Name
+      annotations: {}
+      ingressHostName:  # Skate License Agent Host Name
+      ingressSecretName: skate-dev-tls # Skate License Agent Secret Name
+
+### Configuration values for Cert Manager
+certManager:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: true
+  fullnameOverride: "skate-kube-state-metrics"
+  image:
+    registry: # Your container registry host, e.g. "myregistry.azurecr.io"
+    repository: skate-utils/kube-state-metrics
+    tag: "v2.13.0"
+  imagePullSecrets:
+    - name: regcred
+
+### Configuration parameters for NGINX Ingress Controller
+ingress-nginx:
+  enabled: false
+  controller:
+    name: controller
+    ## Docker image URL for NGINX Controller with tag
+    image:
+      registry: "" # Your container registry host, e.g. "myregistry.azurecr.io"
+      image: "skate-utils/controller"
+      tag: "v1.9.3"
+      digest: ""
+    ## Attach default certificate for NGINX Ingress Controller
+    extraArgs: {}
+      # default-ssl-certificate: "monitoring/console-k8s-certs-secret"
+
+    admissionWebhooks:
+      enabled: true
+      failurePolicy: Ignore
+      patch:
+        enabled: true
+        image:
+          registry: "" # Your container registry host, e.g. "myregistry.azurecr.io"
+          image: skate-utils/kube-webhook-certgen
+          tag: v20231011-8b53cabe0
+          digest: ""
+
+    service:
+      enabled: true
+
+      ## Pre-reserved LoadBalancer IP address for NGINX Controller
+      loadBalancerIP: ""
+      
+      ## Enabled if NGINX service needs to be accessed as a Public Service
+      external:
+        enabled: true
+      ## Service annotations for exposing NGINX Controller Service externally
+      annotations: 
+        service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/healthz"
+        # service.beta.kubernetes.io/azure-load-balancer-ipv4: ""
+        # service.beta.kubernetes.io/oci-load-balancer-internal: "true"
+      
+      ## Enabled if NGINX service needs to be accessed as a Private Service
+      internal:
+        enabled: false
+        ## Service annotations for exposing NGINX Controller Service internally
+        annotations: {}
+          # service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+          # service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/healthz"
+          # service.beta.kubernetes.io/azure-load-balancer-ipv4: ""
+          # service.beta.kubernetes.io/oci-load-balancer-internal: "true"
+      patch:
+        enabled: true
+        image:
+          registry: "" # Your container registry host, e.g. "myregistry.azurecr.io"
+          image: skate-utils/kube-webhook-certgen
+          tag: v20231011-8b53cabe0
+
+  ## Important! Should match dockerRegistry.dockerSecretName, else deployments will fail
+
+        
+  imagePullSecrets:
+    - name: regcred
+
+### Configuration parameters for Kong Ingress Controller
+kong-ingress:
+  enabled: true
+
+  deployment:
+    test:
+      enabled: false # Disable Helm test pods/hooks for Kong releases
+
+  controller:
+    enabled: true # Enable KIC controller plane (Ingress/Gateway reconciliation)
+
+    proxy:
+      nameOverride: "{{ .Release.Name }}-gateway-proxy" # Stable proxy service name used by controller references
+
+    deployment:
+      kong:
+        enabled: false # Controller-only mode; run Kong data plane from gateway section
+
+    ingressController:
+      enabled: true
+      installCRDs: true
+      ingressClass: kong
+      ingressClassResource:
+        enabled: true
+        name: kong
+      gatewayDiscovery:
+        enabled: true
+        generateAdminApiService: true
+
+    podAnnotations:
+      kuma.io/gateway: enabled
+      traffic.kuma.io/exclude-outbound-ports: "8444"
+      traffic.sidecar.istio.io/excludeOutboundPorts: "8444"
+
+  gateway:
+    enabled: true
+
+    deployment:
+      kong:
+        enabled: true
+
+    admin:
+      enabled: true
+      type: ClusterIP
+      clusterIP: None
+
+    proxy:
+      enabled: true
+      type: LoadBalancer
+      loadBalancerIP: ""
+      annotations:
+        service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/status/ready"
+      http:
+        enabled: true
+        servicePort: 80
+        containerPort: 8000
+      tls:
+        enabled: true
+        servicePort: 443
+        containerPort: 8443
+
+    ingressController:
+      enabled: false
+
+    env:
+      role: traditional
+      database: "off"
+
+  imagePullSecrets:
+  - name: regcred
+
+### Configuration parameters for External Secrets
+external-secrets:
+  enabled: true
+  ## Docker image URL for External Secrets with tag
+  image:
+    ## Docker image repository URL without the tag for External Secrets
+    repository: # Your registry/skate-utils/external-secrets
+    tag: "v0.16.2"
+  ## Important! Should match dockerRegistry.dockerSecretName, else deployments will fail
+  imagePullSecrets: 
+  - name: "regcred"
+
+  webhook:
+    image:
+      ## Docker image repository URL without the tag for External Secrets
+      repository: # Your registry/skate-utils/external-secrets
+      tag: "v0.16.2"
+    ## Important! Should match dockerRegistry.dockerSecretName, else deployments will fail
+    imagePullSecrets:
+    - name: "regcred"
+
+  certController:
+    image:
+      ## Docker image repository URL without the tag for External Secrets
+      repository: # Your registry/skate-utils/external-secrets
+      tag: "v0.16.2"
+    ## Important! Should match dockerRegistry.dockerSecretName, else deployments will fail
+    imagePullSecrets: 
+    - name: "regcred"
+
+
+
+identity-server:
+  enabled: false
+  ingress:
+    ingressClassName: kong

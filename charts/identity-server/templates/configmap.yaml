@@ -1,0 +1,32 @@
+{{- $externalSecret := default "false" .Values.externalSecrets.enabled | toString | trim }}
+{{- if ne $externalSecret "true" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-server-configmap
+  namespace: {{ .Values.deployment.namespace }}
+data:
+  ## Common Environment Variables for identity server application
+  DB_HOST: {{ include "identity-server.db-host" . }}
+  DB_PORT: {{ quote (include "identity-server.db-port" .) }}
+  DB_NAME: {{ include "identity-server.db-name" . }}
+  DB_SCHEMA: {{ include "identity-server.db-schema" . }}
+  DB_USERNAME: {{ include "identity-server.db-username" . }}
+  PGSSLMODE: {{ include "identity-server.db-pg-ssl-mode" . }}
+  PORT: {{ quote (include "identity-server.port" .) }}
+  ISSUER: {{ include "identity-server.issuer" . }}
+  IDS_HOST: {{ include "identity-server.ids-host" . }}
+  BUILD_SERVER_LOGGER: {{ include "identity-server.build-server-logger" . }}
+  ALLOWED_ORIGINS: {{ include "identity-server.allowed-origins" . }}
+  SAME_SITE: {{ include "identity-server.same-site" . }}
+  NODE_ENV: {{ include "identity-server.node-env" . }}
+  IDS_DB_TYPE: {{ include "identity-server.ids-db-type" . }}
+  IDS_PROTOCAL: {{ include "identity-server.ids-protocal" . }}
+  DB_TYPE: {{ include "identity-server.db-type" . }}
+  SSL: {{ quote (include "identity-server.ssl" .) }}
+  FREE_TRIAL_CLIENT_ID: {{ include "identity-server.free-trial-client-id" . }}
+  GOOGLE_APPLICATION_CREDENTIALS: {{ include "identity-server.google-application-credentials" . }}
+  IDS_PBKDF2_ITERATIONS: {{ quote (include "identity-server.ids-pbkdf2-iterations" .) }}
+  CAPTCHA_SCORE_TOLERANCE: {{ quote (include "identity-server.captcha-score-tolerance" .) }}
+{{- end }}
+---
